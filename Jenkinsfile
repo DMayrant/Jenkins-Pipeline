@@ -30,10 +30,8 @@ pipeline {
         stage ('Install kubescape') {
             steps {
                 sh '''
-                set -e;
-                echo "Installing kubescape";
-                 curl -s https://raw.githubusercontent.com/kubescape/kubescape/master/install.sh | /bin/bash;
-                kubescape version;
+                echo "Installing kubescape"
+                curl -s https://raw.githubusercontent.com/kubescape/kubescape/master/install.sh | bash
                 '''
             }
         }
