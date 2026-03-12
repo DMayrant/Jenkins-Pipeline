@@ -93,3 +93,4 @@ pipeline {
             echo "Pipeline failed, please check Jenkins logs ⚠️"
         }
     }
+}
