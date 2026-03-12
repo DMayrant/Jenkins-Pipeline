@@ -31,8 +31,8 @@ pipeline {
                 sh '''
                 echo 'Installing kubescape'
 
-                curl -LO https://github.com/kubescape/kubescape/releases/latest/download/kubescape-ubuntu-latest
-                
+                curl -L -o kubescape https://github.com/kubescape/kubescape/releases/latest/download/kubescape-ubuntu-latest
+
                 chmod +x kubescape-ubuntu-latest
                 
                 mv kubescape-ubuntu-latest kubescape
