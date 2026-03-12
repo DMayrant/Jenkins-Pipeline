@@ -30,10 +30,12 @@ pipeline {
         stage ('Install kubescape') {
             steps {
                 sh '''
+                set -e
+                
                 echo 'Installing kubescape'
 
-                curl -L -o kubescape https://github.com/kubescape/kubescape/releases/latest/download/kubescape-linux-amd64
-
+                curl -L -o kubescape https://github.com/kubescape/kubescape/releases/latest/download/kubescape-ubuntu-latest
+                
                 chmod +x kubescape
                 
                 ./kubescape version
