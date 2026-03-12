@@ -9,6 +9,7 @@ pipeline {
 
                 curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
                 chmod +x kubectl
+                export PATH=$PATH:$PWD
                 ./kubectl version --client
                 '''
             }
@@ -33,9 +34,7 @@ pipeline {
 
                 curl -L -o kubescape https://github.com/kubescape/kubescape/releases/latest/download/kubescape-ubuntu-latest
 
-                chmod +x kubescape-ubuntu-latest
-                
-                mv kubescape-ubuntu-latest kubescape
+                chmod +x kubescape
                 
                 ./kubescape version
                 '''
@@ -45,6 +44,7 @@ pipeline {
             steps { 
                 sh '''
                 echo 'Scanning images for vulnerabilities 🔍'
+                docker pull nginx:1.29.0
                 docker scout cves nginx:1.29.0
                 '''
             }
@@ -52,6 +52,7 @@ pipeline {
         stage ('SNYK scan') {
             steps {
                 sh '''
+                docker pull nginx:1.29.0
                 ./snyk container test nginx:1.29.0 || true
                 '''
             }
@@ -72,7 +73,7 @@ pipeline {
                 echo 'Generating YAML manifests 🗃️'
                
                 ./kubectl create deployment nginx-deploy --image=nginx:1.29.0 --port=80 --replicas=3 --dry-run=client -o yaml > nginx-deploy.yaml
-                ./kubectl run curl --image=curlimages/curl --dry-run=client -o yaml > curl.yaml 
+                ./kubectl run curl --image=curlimages/curl --restart=Never --dry-run=client -o yaml > curl.yaml 
                 ./kubectl expose deploy nginx-deploy --port=80 --target-port=80 --type=NodePort --dry-run=client -o yaml > nginx-svc.yaml
                 '''
             }
@@ -94,7 +95,8 @@ pipeline {
                 echo 'Checking logs 📊'
                 
                 ./kubectl logs deployment/nginx-deploy --tail=10 > nginx-logs.log
-                ./kubectl logs pod/curl 
+                ./kubectl wait --for=condition=Ready pod -l run=curl --timeout=60s
+                ./kubectl logs -l run=curl --tail=10
                 ./kubectl get events --sort-by=.lastTimestamp | tail -n 15
                 '''
             }
@@ -120,7 +122,7 @@ pipeline {
         stage ('internal service discovery') {
             steps {
                 sh '''
-                ./kubectl exec pod/curl -- curl -s nginx-deploy:80
+                ./kubectl exec $(./kubectl get pod -l run=curl -o jsonpath="{.items[0].metadata.name}") -- curl -s nginx-deploy:80
                 '''
             }
         }
