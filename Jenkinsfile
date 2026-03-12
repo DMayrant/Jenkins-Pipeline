@@ -93,8 +93,3 @@ pipeline {
             echo "Pipeline failed, please check Jenkins logs ⚠️"
         }
     }
-<<<<<<< HEAD
-}
-=======
-}
->>>>>>> cf9629d89413ffd7000e6428c929c2406ad7100d
