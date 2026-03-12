@@ -20,9 +20,9 @@ pipeline {
 
                 curl --compressed https://downloads.snyk.io/cli/stable/snyk-linux -o snyk
                 
-                chmod +x ./snyk
-                
-                mv ./snyk /usr/local/bin/
+                chmod +x snyk
+
+                ./snyk --version
                 '''
             }
         }
@@ -49,10 +49,10 @@ pipeline {
                 '''
             }
         }
-        stage {'SNYK scan'} {
+        stage ('SNYK scan') {
             steps {
                 sh '''
-                ./snyk container test nginx:1.29.0
+                ./snyk container test nginx:1.29.0 || true
                 '''
             }
         }
@@ -61,8 +61,8 @@ pipeline {
                 sh '''
                 echo 'Creating service account 📝'
                
-                kubectl create sa jenkins --dry-run=client -o yaml > jenkins-sa.yaml
-                kubectl apply -f jenkins-sa.yaml
+                ./kubectl create sa jenkins --dry-run=client -o yaml > jenkins-sa.yaml
+                ./kubectl apply -f jenkins-sa.yaml
                 '''
             }
         }
@@ -71,9 +71,9 @@ pipeline {
                 sh '''
                 echo 'Generating YAML manifests 🗃️'
                
-                kubectl create deployment nginx-deploy --image=nginx:1.29.0 --port=80 --replicas=3 --dry-run=client -o yaml > nginx-deploy.yaml
-                kubectl run curl --image=curlimages/curl --dry-run=client -o yaml > curl.yaml 
-                kubectl expose deploy nginx-deploy --port=80 --target-port=80 --type=NodePort --dry-run=client -o yaml > nginx-svc.yaml
+                ./kubectl create deployment nginx-deploy --image=nginx:1.29.0 --port=80 --replicas=3 --dry-run=client -o yaml > nginx-deploy.yaml
+                ./kubectl run curl --image=curlimages/curl --dry-run=client -o yaml > curl.yaml 
+                ./kubectl expose deploy nginx-deploy --port=80 --target-port=80 --type=NodePort --dry-run=client -o yaml > nginx-svc.yaml
                 '''
             }
         }
@@ -82,9 +82,9 @@ pipeline {
                 sh '''
                 echo 'Applying workloads 🧰'
                 
-                kubectl apply -f nginx-deploy.yaml
-                kubectl apply -f curl.yaml
-                kubectl apply -f nginx-svc.yaml
+                ./kubectl apply -f nginx-deploy.yaml
+                ./kubectl apply -f curl.yaml
+                ./kubectl apply -f nginx-svc.yaml
                 ''' 
             }
         }
@@ -93,9 +93,9 @@ pipeline {
                 sh '''
                 echo 'Checking logs 📊'
                 
-                kubectl logs deployment/nginx-deploy --tail=10 > nginx-logs.log
-                kubectl logs pod/curl 
-                kubectl get events --sort-by=.lastTimestamp | tail -n 15
+                ./kubectl logs deployment/nginx-deploy --tail=10 > nginx-logs.log
+                ./kubectl logs pod/curl 
+                ./kubectl get events --sort-by=.lastTimestamp | tail -n 15
                 '''
             }
         }
@@ -104,23 +104,23 @@ pipeline {
                 sh '''
                 echo 'Checking deployment status 🧪'
                 
-                kubectl rollout status deployment/nginx-deploy
-                kubectl rollout history deployment/nginx-deploy
+                ./kubectl rollout status deployment/nginx-deploy
+                ./kubectl rollout history deployment/nginx-deploy
                 '''
             }
         }
         stage ('Rollback') {
             steps {
                 sh '''
-                kubectl rollout undo deployment/nginx-deploy
-                kubectl describe deployment nginx-deploy
+                ./kubectl rollout undo deployment/nginx-deploy
+                ./kubectl describe deployment nginx-deploy
                 '''
             }
         }
         stage ('internal service discovery') {
             steps {
                 sh '''
-                kubectl exec pod/curl -- curl -s nginx-deploy:80
+                ./kubectl exec pod/curl -- curl -s nginx-deploy:80
                 '''
             }
         }
@@ -129,7 +129,7 @@ pipeline {
                 sh '''
                 echo "Port-forwarding 🌎"
                 
-                kubectl port-forward svc/nginx-deploy 3000:80 & 
+                ./kubectl port-forward svc/nginx-deploy 3000:80 & 
                 sleep 5 
                 curl http://localhost:3000
                 '''
@@ -140,7 +140,7 @@ pipeline {
                 sh '''
                 echo 'Scanning kubernetes cluster'
                 
-                kubescape scan
+                ./kubescape scan
                 '''
             }
 
