@@ -39,7 +39,9 @@ pipeline {
             steps { 
                 sh '''
                 echo 'Scanning images for vulnerabilities 🔍'
+                
                 docker pull nginx:1.29.0
+
                 docker scout cves nginx:1.29.0
                 '''
             }
