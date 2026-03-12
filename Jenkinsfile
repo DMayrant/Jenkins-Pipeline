@@ -149,11 +149,11 @@ pipeline {
             }
 
         }
-        stage {'Cleanup'} {
+        stage ('Cleanup') {
             steps {
                 sh '''
                 echo 'Cleaning up resources 🧹'
-                
+
                 ./kubectl delete -f nginx-deploy.yaml --ignore-not-found=true
                 ./kubectl delete -f curl.yaml --ignore-not-found=true
                 ./kubectl delete -f nginx-svc.yaml --ignore-not-found=true
