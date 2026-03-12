@@ -36,7 +36,7 @@ pipeline {
 
                  curl -s https://raw.githubusercontent.com/kubescape/kubescape/master/install.sh | /bin/bash
 
-                ./kubescape version
+                kubescape version
                 '''
             }
         }
