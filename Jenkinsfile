@@ -69,9 +69,9 @@ pipeline {
             steps {
                 sh '''
                 echo "Port-forwarding 🌎"
-                kubectl port-forward svc/nginx-deploy 3000:80 & 
+                kubectl port-forward svc/nginx-deploy 4000:80 & 
                 sleep 5 
-                curl http://localhost:3000
+                curl http://localhost:4000
                 '''
             }
         }
