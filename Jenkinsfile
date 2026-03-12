@@ -34,10 +34,8 @@ pipeline {
                 
                 echo 'Installing kubescape'
 
-                curl -L https://github.com/kubescape/kubescape/releases/latest/download/kubescape-linux-amd64 -o kubescape
+                 curl -s https://raw.githubusercontent.com/kubescape/kubescape/master/install.sh | /bin/bash
 
-                chmod +x kubescape
-                
                 ./kubescape version
                 '''
             }
