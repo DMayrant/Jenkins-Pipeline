@@ -9,7 +9,6 @@ pipeline {
 
                 curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
                 chmod +x kubectl
-                export PATH=$PATH:$PWD
                 ./kubectl version --client
                 '''
             }
@@ -19,7 +18,10 @@ pipeline {
                 sh '''
                 echo 'Installing kubescape'
 
-                curl -s https://raw.githubusercontent.com/kubescape/kubescape/master/install.sh | /bin/bash
+                 url -LO https://github.com/kubescape/kubescape/releases/latest/download/kubescape-ubuntu-latest
+                chmod +x kubescape-ubuntu-latest
+                mv kubescape-ubuntu-latest kubescape
+                ./kubescape version
                 kubescape version
                 '''
             }
@@ -88,7 +90,7 @@ pipeline {
         stage ('Rollback') {
             steps {
                 sh '''
-                kubectl rollout undo deployment nginx-deploy
+                kubectl rollout undo deployment/nginx-deploy
                 kubectl describe deployment nginx-deploy
                 '''
             }
