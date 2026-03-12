@@ -2,6 +2,28 @@ pipeline {
     agent any
 
     stages {
+        stage ('Install kubectl') {
+            steps {
+                sh '''
+                echo 'Installing kubectl'
+
+                curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+                chmod +x kubectl
+                mv kubectl /usr/local/bin/
+                kubectl version --client
+                '''
+            }
+        }
+        stage ('Install kubescape') {
+            steps {
+                sh '''
+                echo 'Installing kubescape'
+
+                curl -s https://raw.githubusercontent.com/kubescape/kubescape/master/install.sh | /bin/bash
+                kubescape version
+                '''
+            }
+        }
         stage ('image scan') {
             steps { 
                 sh '''
@@ -14,6 +36,7 @@ pipeline {
             steps {
                 sh '''
                 echo 'Creating service account 📝'
+               
                 kubectl create sa jenkins --dry-run=client -o yaml > jenkins-sa.yaml
                 kubectl apply -f jenkins-sa.yaml
                 '''
@@ -23,7 +46,8 @@ pipeline {
             steps {
                 sh '''
                 echo 'Generating YAML manifests 🗃️'
-                kubectl create deploy nginx-deploy --image=nginx:1.29.0 --port=80 --replicas=3 --dry-run=client -o yaml > nginx-deploy.yaml
+               
+                kubectl create deployment nginx-deploy --image=nginx:1.29.0 --port=80 --replicas=3 --dry-run=client -o yaml > nginx-deploy.yaml
                 kubectl run curl --image=curlimages/curl --dry-run=client -o yaml > curl.yaml 
                 kubectl expose deploy nginx-deploy --port=80 --target-port=80 --type=NodePort --dry-run=client -o yaml > nginx-svc.yaml
                 '''
@@ -33,6 +57,7 @@ pipeline {
             steps {
                 sh '''
                 echo 'Applying workloads 🧰'
+                
                 kubectl apply -f nginx-deploy.yaml
                 kubectl apply -f curl.yaml
                 kubectl apply -f nginx-svc.yaml
@@ -43,7 +68,8 @@ pipeline {
             steps {
                 sh '''
                 echo 'Checking logs 📊'
-                kubectl logs deploy/nginx-deploy --tail=10 > nginx-logs.log
+                
+                kubectl logs deployment/nginx-deploy --tail=10 > nginx-logs.log
                 kubectl logs pod/curl 
                 kubectl get events --sort-by=.lastTimestamp | tail -n 15
                 '''
@@ -53,6 +79,7 @@ pipeline {
             steps {
                 sh '''
                 echo 'Checking deployment status 🧪'
+                
                 kubectl rollout status deployment/nginx-deploy
                 kubectl rollout history deployment/nginx-deploy
                 '''
@@ -61,7 +88,7 @@ pipeline {
         stage ('internal service discovery') {
             steps {
                 sh '''
-                kubectl exec curl -- curl http://nginx-deploy.default.svc.cluster.local:80
+                kubectl exec pod/curl -- curl -s nginx-deploy:80
                 '''
             }
         }
@@ -69,6 +96,7 @@ pipeline {
             steps {
                 sh '''
                 echo "Port-forwarding 🌎"
+                
                 kubectl port-forward svc/nginx-deploy 3000:80 & 
                 sleep 5 
                 curl http://localhost:3000
@@ -79,6 +107,7 @@ pipeline {
             steps {
                 sh '''
                 echo 'Scanning kubernetes cluster'
+                
                 kubescape scan
                 '''
             }
