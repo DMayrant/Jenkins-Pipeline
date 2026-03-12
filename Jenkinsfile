@@ -42,7 +42,7 @@ pipeline {
                 '''
             }
         }
-        stage ('image scan') {
+        stage ('Docker Scout scan') {
             steps { 
                 sh '''
                 echo 'Scanning images for vulnerabilities 🔍'
