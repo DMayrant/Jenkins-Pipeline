@@ -34,8 +34,8 @@ pipeline {
                 
                 echo 'Installing kubescape'
 
-                curl -L -o kubescape https://github.com/kubescape/kubescape/releases/latest/download/kubescape-ubuntu-latest
-                
+                curl -L https://github.com/kubescape/kubescape/releases/latest/download/kubescape-linux-amd64 -o kubescape
+
                 chmod +x kubescape
                 
                 ./kubescape version
@@ -148,6 +148,18 @@ pipeline {
                 '''
             }
 
+        }
+        stage {'Cleanup 🧹'} {
+            steps {
+                sh '''
+                ./kubectl delete -f nginx-deploy.yaml --ignore-not-found=true
+                ./kubectl delete -f curl.yaml --ignore-not-found=true
+                ./kubectl delete -f nginx-svc.yaml --ignore-not-found=true
+                ./kubectl delete -f jenkins-sa.yaml --ignore-not-found=true
+
+                ./kubectl get all
+                '''
+            }
         }
     }
     post {
