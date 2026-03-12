@@ -13,6 +13,19 @@ pipeline {
                 '''
             }
         }
+        stage ('Install SNYK Scan') {
+            steps {
+                sh '''
+                echo 'Installing SNYK scan'
+
+                curl --compressed https://downloads.snyk.io/cli/stable/snyk-linux -o snyk
+                
+                chmod +x ./snyk
+                
+                mv ./snyk /usr/local/bin/
+                '''
+            }
+        }
         stage ('Install kubescape') {
             steps {
                 sh '''
@@ -33,6 +46,13 @@ pipeline {
                 sh '''
                 echo 'Scanning images for vulnerabilities 🔍'
                 docker scout cves nginx:1.29.0
+                '''
+            }
+        }
+        stage {'SNYK scan'} {
+            steps {
+                sh '''
+                ./snyk container test nginx:1.29.0
                 '''
             }
         }
