@@ -33,7 +33,7 @@ pipeline {
             steps {
                 sh '''
                 echo 'Applying workloads 🧰'
-                kubectl apply -f nginx-app.yaml
+                kubectl apply -f nginx-deploy.yaml
                 kubectl apply -f curl.yaml
                 kubectl apply -f nginx-svc.yaml
                 ''' 
