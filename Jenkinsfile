@@ -39,12 +39,12 @@ pipeline {
                 echo 'Installing docker scout'
                 mkdir -p ~/.docker/cli-plugins
     
-                curl -sSL https://github.com/docker/scout-cli/releases/latest/download/docker-scout_linux_amd64 \
-                -o ~/.docker/cli-plugins/docker-scout
+                curl -L https://github.com/docker/scout-cli/releases/latest/download/docker-scout_linux_amd64 \
+                -o docker-scout
         
                 chmod +x ~/.docker/cli-plugins/docker-scout
                 
-                docker scout version
+                ./docker scout version
                 '''
             }
         }
@@ -52,8 +52,10 @@ pipeline {
             steps { 
                 sh '''
                 echo 'Scanning images for vulnerabilities'
+                
                 docker pull nginx:1.29.0
-                docker scout cves nginx:1.29.0
+               
+                ./docker scout cves nginx:1.29.0
                 '''
             }
         }
@@ -94,10 +96,10 @@ pipeline {
                 ''' 
             }
         }
-        stage ('Logs') {
+        stage ('Logs 📊') {
             steps {
                 sh '''
-                echo 'Checking logs 📊'
+                echo 'Checking logs'
                 
                 ./kubectl logs deployment/nginx-deploy --tail=10 > nginx-logs.log         
                 ./kubectl wait --for=condition=Ready pod -l run=curl --timeout=60s             
@@ -106,7 +108,7 @@ pipeline {
                 '''
             }
         }
-        stage ('Health Check') {
+        stage ('Health Check ⚕️') {
             steps {
                 sh '''
                 echo 'Checking deployment status 🧪'
