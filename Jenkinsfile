@@ -21,23 +21,25 @@ pipeline {
                 curl -s https://raw.githubusercontent.com/kubescape/kubescape/master/install.sh | bash
                 '''
             }
+        } 
+        stage ('Image Pull' ){
+            steps {
+                sh '''
+                docker pull nginx:1.29.0
+                '''
+            }
         }
         stage ('Docker Scout scan 🩻') {
             steps { 
                 sh '''
-                echo 'Scanning images for vulnerabilities'
-                
-                docker pull nginx:1.29.0
-               
+                set -e
                 docker scout cves nginx:1.29.0
                 '''
             }
         }
         stage ('SNYK scan 🩻') {
             steps {
-                sh '''
-                docker pull nginx:1.29.0              
-                
+                sh '''                       
                 ./snyk container test nginx:1.29.0 || true
                 '''
             }
