@@ -21,11 +21,10 @@ pipeline {
                 '''
             }
         }
-        stage ('Docker Scout Scan 🩻') {
+        stage ('Trivy Scan 🩻') {
             steps { 
                 sh '''
-                set -e
-                docker scout cves nginx:1.29.0
+                trivy image --severity HIGH,CRITICAL --exit-code 1 nginx:1.29.0
                 '''
             }
         }
