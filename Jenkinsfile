@@ -14,14 +14,6 @@ pipeline {
                 '''
             }
         }
-        stage ('Install kubescape 🐳') {
-            steps {
-                sh '''
-                echo 'Installing kubescape'
-                curl -s https://raw.githubusercontent.com/kubescape/kubescape/master/install.sh | bash
-                '''
-            }
-        } 
         stage ('Image Pull' ){
             steps {
                 sh '''
