@@ -39,10 +39,10 @@ pipeline {
                 echo 'Installing docker scout'
                 mkdir -p ~/.docker/cli-plugins
     
-                curl -L https://github.com/docker/scout-cli/releases/latest/download/docker-scout_linux_amd64 \
+                curl -fL https://github.com/docker/scout-cli/releases/latest/download/docker-scout_linux_amd64 \
                 -o docker-scout
         
-                chmod +x ~/.docker/cli-plugins/docker-scout
+                chmod +x docker-scout
                 
                 ./docker scout version
                 '''
