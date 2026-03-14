@@ -40,7 +40,7 @@ pipeline {
     
                 curl -sSfL https://raw.githubusercontent.com/docker/scout-cli/main/install.sh | sh
                 
-                ./docker-scout version
+                docker scout version
                 '''
             }
         }
