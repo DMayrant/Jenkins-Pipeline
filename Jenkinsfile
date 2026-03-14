@@ -38,10 +38,7 @@ pipeline {
                 sh '''
                 echo 'Installing docker scout'
     
-                 curl -fL https://github.com/docker/scout-cli/releases/latest/download/docker-scout-linux-amd64 \
-                 -o docker-scout
-
-                chmod +x docker-scout
+                curl -sSfL https://raw.githubusercontent.com/docker/scout-cli/main/install.sh | sh
                 
                 ./docker-scout version
                 '''
