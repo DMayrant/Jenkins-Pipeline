@@ -2,18 +2,6 @@ pipeline {
     agent any
 
     stages {
-        stage ('Install kubectl 🐳') {
-            steps {
-                sh '''
-                echo 'Installing kubectl'
-
-                curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
-                chmod +x kubectl
-                export PATH=$PATH:$PWD
-                ./kubectl version --client
-                '''
-            }
-        }
         stage ('Image Pull' ){
             steps {
                 sh '''
