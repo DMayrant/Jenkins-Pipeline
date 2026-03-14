@@ -51,7 +51,7 @@ pipeline {
                 
                 docker pull nginx:1.29.0
                
-                ./docker-scout cves nginx:1.29.0
+                docker scout cves nginx:1.29.0
                 '''
             }
         }
