@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     stages {
-        stage ('Install kubectl') {
+        stage ('Install kubectl 🐳') {
             steps {
                 sh '''
                 echo 'Installing kubectl'
@@ -14,63 +14,72 @@ pipeline {
                 '''
             }
         }
-        stage ('Install SNYK Scan') {
+        stage ('Install SNYK Scan 🔎') {
             steps {
                 sh '''
                 echo 'Installing SNYK scan'
 
                 curl --compressed https://downloads.snyk.io/cli/stable/snyk-linux -o snyk
-                
                 chmod +x snyk
-
                 ./snyk --version
                 '''
             }
         }
-        stage ('Install kubescape') {
+        stage ('Install kubescape 🐳') {
             steps {
                 sh '''
-                echo "Installing kubescape"
+                echo 'Installing kubescape'
                 curl -s https://raw.githubusercontent.com/kubescape/kubescape/master/install.sh | bash
                 '''
             }
         }
-        stage ('Docker Scout scan') {
+        stage ('Install Docker Scout 🕵🏾‍♂️') {
+            steps {
+                sh '''
+                echo 'Installing docker scout'
+                mkdir -p ~/.docker/cli-plugins
+    
+                curl -sSL https://github.com/docker/scout-cli/releases/latest/download/docker-scout_linux_amd64 \
+                -o ~/.docker/cli-plugins/docker-scout
+        
+                chmod +x ~/.docker/cli-plugins/docker-scout
+                
+                docker scout version
+                '''
+            }
+        }
+        stage ('Docker Scout scan 🩻') {
             steps { 
                 sh '''
-                echo 'Scanning images for vulnerabilities 🔍'
-                
+                echo 'Scanning images for vulnerabilities'
                 docker pull nginx:1.29.0
-
                 docker scout cves nginx:1.29.0
                 '''
             }
         }
-        stage ('SNYK scan') {
+        stage ('SNYK scan 🩻') {
             steps {
                 sh '''
-                docker pull nginx:1.29.0
+                docker pull nginx:1.29.0              
                 ./snyk container test nginx:1.29.0 || true
                 '''
             }
         }
-        stage ('kubernetes service account') {
+        stage ('kubernetes service account 📝') {
             steps {
                 sh '''
-                echo 'Creating service account 📝'
-               
-                ./kubectl create sa jenkins --dry-run=client -o yaml > jenkins-sa.yaml
+                echo 'Creating service account'               
+                ./kubectl create sa jenkins --dry-run=client -o yaml > jenkins-sa.yaml                
                 ./kubectl apply -f jenkins-sa.yaml
                 '''
             }
         }
-        stage ('testing') {
+        stage ('Testing') {
             steps {
                 sh '''
-                echo 'Generating YAML manifests 🗃️'
-               
-                ./kubectl create deployment nginx-deploy --image=nginx:1.29.0 --port=80 --replicas=3 --dry-run=client -o yaml > nginx-deploy.yaml
-                ./kubectl run curl --image=curlimages/curl --restart=Never --dry-run=client -o yaml > curl.yaml 
+                echo 'Generating YAML manifests'            
+                ./kubectl create deployment nginx-deploy --image=nginx:1.29.0 --port=80 --replicas=3 --dry-run=client -o yaml > nginx-deploy.yaml              
+                ./kubectl run curl --image=curlimages/curl --restart=Never --dry-run=client -o yaml > curl.yaml            
                 ./kubectl expose deploy nginx-deploy --port=80 --target-port=80 --type=NodePort --dry-run=client -o yaml > nginx-svc.yaml
                 '''
             }
@@ -78,10 +87,9 @@ pipeline {
         stage ('Apply') {
             steps {
                 sh '''
-                echo 'Applying workloads 🧰'
-                
-                ./kubectl apply -f nginx-deploy.yaml
-                ./kubectl apply -f curl.yaml
+                echo 'Applying workloads 🧰'               
+                ./kubectl apply -f nginx-deploy.yaml           
+                ./kubectl apply -f curl.yaml             
                 ./kubectl apply -f nginx-svc.yaml
                 ''' 
             }
@@ -91,19 +99,19 @@ pipeline {
                 sh '''
                 echo 'Checking logs 📊'
                 
-                ./kubectl logs deployment/nginx-deploy --tail=10 > nginx-logs.log
-                ./kubectl wait --for=condition=Ready pod -l run=curl --timeout=60s
-                ./kubectl logs -l run=curl --tail=10
+                ./kubectl logs deployment/nginx-deploy --tail=10 > nginx-logs.log         
+                ./kubectl wait --for=condition=Ready pod -l run=curl --timeout=60s             
+                ./kubectl logs -l run=curl --tail=10              
                 ./kubectl get events --sort-by=.lastTimestamp | tail -n 15
                 '''
             }
         }
-        stage ('deployment health check') {
+        stage ('Health Check') {
             steps {
                 sh '''
                 echo 'Checking deployment status 🧪'
                 
-                ./kubectl rollout status deployment/nginx-deploy
+                ./kubectl rollout status deployment/nginx-deploy              
                 ./kubectl rollout history deployment/nginx-deploy
                 '''
             }
@@ -111,19 +119,19 @@ pipeline {
         stage ('Rollback') {
             steps {
                 sh '''
-                ./kubectl rollout undo deployment/nginx-deploy
+                ./kubectl rollout undo deployment/nginx-deploy       
                 ./kubectl describe deployment nginx-deploy
                 '''
             }
         }
-        stage ('internal service discovery') {
+        stage ('Internal Service Discovery') {
             steps {
                 sh '''
                 ./kubectl exec $(./kubectl get pod -l run=curl -o jsonpath="{.items[0].metadata.name}") -- curl -s nginx-deploy:80
                 '''
             }
         }
-        stage ('port-forward') {
+        stage ('Port-Forward 🌐') {
             steps {
                 sh '''
                 echo "Port-forwarding 🌎"
@@ -134,7 +142,7 @@ pipeline {
                 '''
             }
         }
-        stage ('Security Posture') {
+        stage ('Security Posture 🩻') {
             steps {
                 sh '''
                 echo 'Scanning kubernetes cluster'
@@ -144,16 +152,15 @@ pipeline {
             }
 
         }
-        stage ('Cleanup') {
+        stage ('Cleanup 🧹') {
             steps {
                 sh '''
-                echo 'Cleaning up resources 🧹'
+                echo 'Cleaning up resources'
 
-                ./kubectl delete -f nginx-deploy.yaml --ignore-not-found=true
-                ./kubectl delete -f curl.yaml --ignore-not-found=true
-                ./kubectl delete -f nginx-svc.yaml --ignore-not-found=true
+                ./kubectl delete -f nginx-deploy.yaml --ignore-not-found=true            
+                ./kubectl delete -f curl.yaml --ignore-not-found=true       
+                ./kubectl delete -f nginx-svc.yaml --ignore-not-found=true            
                 ./kubectl delete -f jenkins-sa.yaml --ignore-not-found=true
-
                 ./kubectl get all
                 '''
             }
