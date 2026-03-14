@@ -59,6 +59,7 @@ pipeline {
             steps {
                 sh '''
                 docker pull nginx:1.29.0              
+                
                 ./snyk container test nginx:1.29.0 || true
                 '''
             }
