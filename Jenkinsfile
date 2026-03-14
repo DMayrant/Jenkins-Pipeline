@@ -21,7 +21,7 @@ pipeline {
                 '''
             }
         }
-        stage ('Docker Scout scan 🩻') {
+        stage ('Docker Scout Scan 🩻') {
             steps { 
                 sh '''
                 set -e
