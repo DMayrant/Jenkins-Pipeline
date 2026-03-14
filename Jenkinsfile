@@ -18,7 +18,7 @@ pipeline {
                 '''
             }
         }
-        stage ('SNYK scan 🩻') {
+        stage ('SNYK scan 🔐') {
             steps {
                 sh '''                       
                 ./snyk container test nginx:1.29.0 || true
