@@ -14,33 +14,11 @@ pipeline {
                 '''
             }
         }
-        stage ('Install SNYK Scan 🔎') {
-            steps {
-                sh '''
-                echo 'Installing SNYK scan'
-
-                curl --compressed https://downloads.snyk.io/cli/stable/snyk-linux -o snyk
-                chmod +x snyk
-                ./snyk --version
-                '''
-            }
-        }
         stage ('Install kubescape 🐳') {
             steps {
                 sh '''
                 echo 'Installing kubescape'
                 curl -s https://raw.githubusercontent.com/kubescape/kubescape/master/install.sh | bash
-                '''
-            }
-        }
-        stage ('Install Docker Scout 🕵🏾‍♂️') {
-            steps {
-                sh '''
-                echo 'Installing docker scout'
-    
-                curl -sSfL https://raw.githubusercontent.com/docker/scout-cli/main/install.sh | sh
-                
-                docker scout version
                 '''
             }
         }
