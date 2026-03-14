@@ -37,14 +37,13 @@ pipeline {
             steps {
                 sh '''
                 echo 'Installing docker scout'
-                mkdir -p ~/.docker/cli-plugins
     
                 curl -fL https://github.com/docker/scout-cli/releases/latest/download/docker-scout_linux_amd64 \
                 -o docker-scout
         
                 chmod +x docker-scout
                 
-                ./docker scout version
+                ./docker-scout version
                 '''
             }
         }
@@ -55,7 +54,7 @@ pipeline {
                 
                 docker pull nginx:1.29.0
                
-                ./docker scout cves nginx:1.29.0
+                ./docker-scout cves nginx:1.29.0
                 '''
             }
         }
@@ -139,8 +138,12 @@ pipeline {
                 echo "Port-forwarding 🌎"
                 
                 ./kubectl port-forward svc/nginx-deploy 3000:80 & 
+                PF_PID=$!
+
                 sleep 5 
                 curl http://localhost:3000
+
+                kill $PF_PID
                 '''
             }
         }
