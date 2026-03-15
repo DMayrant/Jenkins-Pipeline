@@ -14,95 +14,28 @@ pipeline {
                 sh '''
                 echo 'Scanning for vulnerabilities...'
                 trivy image --severity HIGH,CRITICAL nginx:1.29.0 || true
-                trivy --version
                 '''
             }
         }
         stage ('SNYK scan 🔐') {
             steps {
                 sh '''                       
-                ./snyk container test nginx:1.29.0 || true
+                snyk container test nginx:1.29.0 || true
                 '''
             }
         }
-        stage ('kubernetes service account 📝') {
+        stage ('Deployment to Kubernetes 🚀') {
             steps {
                 sh '''
-                echo 'Creating service account'               
-                ./kubectl create sa jenkins --dry-run=client -o yaml > jenkins-sa.yaml                
-                ./kubectl apply -f jenkins-sa.yaml
-                '''
-            }
-        }
-        stage ('Testing') {
-            steps {
-                sh '''
-                echo 'Generating YAML manifests'            
-                ./kubectl create deployment nginx-deploy --image=nginx:1.29.0 --port=80 --replicas=3 --dry-run=client -o yaml > nginx-deploy.yaml              
-                ./kubectl run curl --image=curlimages/curl --restart=Never --dry-run=client -o yaml > curl.yaml            
-                ./kubectl expose deploy nginx-deploy --port=80 --target-port=80 --type=NodePort --dry-run=client -o yaml > nginx-svc.yaml
-                '''
-            }
-        }
-        stage ('Apply') {
-            steps {
-                sh '''
-                echo 'Applying workloads 🧰'               
-                ./kubectl apply -f nginx-deploy.yaml           
-                ./kubectl apply -f curl.yaml             
-                ./kubectl apply -f nginx-svc.yaml
-                ''' 
-            }
-        }
-        stage ('Logs 📊') {
-            steps {
-                sh '''
-                echo 'Checking logs'
-                
-                ./kubectl logs deployment/nginx-deploy --tail=10 > nginx-logs.log         
-                ./kubectl wait --for=condition=Ready pod -l run=curl --timeout=60s             
-                ./kubectl logs -l run=curl --tail=10              
-                ./kubectl get events --sort-by=.lastTimestamp | tail -n 15
-                '''
-            }
-        }
-        stage ('Health Check ⚕️') {
-            steps {
-                sh '''
-                echo 'Checking deployment status 🧪'
-                
-                ./kubectl rollout status deployment/nginx-deploy              
-                ./kubectl rollout history deployment/nginx-deploy
-                '''
-            }
-        }
-        stage ('Rollback') {
-            steps {
-                sh '''
-                ./kubectl rollout undo deployment/nginx-deploy       
-                ./kubectl describe deployment nginx-deploy
-                '''
-            }
-        }
-        stage ('Internal Service Discovery') {
-            steps {
-                sh '''
-                ./kubectl exec $(./kubectl get pod -l run=curl -o jsonpath="{.items[0].metadata.name}") -- curl -s nginx-deploy:80
-                '''
-            }
-        }
-        stage ('Port-Forward 🌐') {
-            steps {
-                sh '''
-                echo "Port-forwarding 🌎"
-                
-                ./kubectl port-forward svc/nginx-deploy 3000:80 & 
-                PF_PID=$!
+                set -e
 
-                sleep 5 
-                curl http://localhost:3000
-
-                kill $PF_PID
+                kubectl create deployment nginx-deploy --image=nginx:1.29.0 --port=80 --replicas=5 --dry-run=client -o yaml > nginx-deploy.yaml
+                kubectl apply -f nginx-deploy.yaml 
+                kubectl expose deployment nginx-deploy --port=80 --type=ClusterIP --dry-run=client -o yaml > service.yaml
+                kubectl apply -f service.yaml
+                kubectl describe svc nginx-deploy
+                kubectl rollout status deployment nginx-deploy
+                kubectl get pods
                 '''
             }
         }
@@ -111,21 +44,26 @@ pipeline {
                 sh '''
                 echo 'Scanning kubernetes cluster'
                 
-                ./kubescape scan
+                kubescape scan
                 '''
             }
-
         }
-        stage ('Cleanup 🧹') {
+        stage ('OWASP ZAP ⚡️') {
             steps {
                 sh '''
-                echo 'Cleaning up resources'
+                echo 'Starting port-forwarding...'
+                kubectl port-forward svc/nginx-deploy 3000:80 &
+                PF_PID=$!
 
-                ./kubectl delete -f nginx-deploy.yaml --ignore-not-found=true            
-                ./kubectl delete -f curl.yaml --ignore-not-found=true       
-                ./kubectl delete -f nginx-svc.yaml --ignore-not-found=true            
-                ./kubectl delete -f jenkins-sa.yaml --ignore-not-found=true
-                ./kubectl get all
+                sleep 5
+
+                echo 'Running OWASP ZAP scan'
+
+                docker run --rm \
+                -t owasp/zap2docker-stable zap-baseline.py \
+                -t http://localhost:3000 \
+                -r zap-report.html || true
+                kill $PF_PID
                 '''
             }
         }
