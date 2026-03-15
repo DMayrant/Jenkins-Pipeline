@@ -19,8 +19,9 @@ pipeline {
         }
         stage ('SNYK scan 🔐') {
             steps {
-                sh '''                       
-                snyk container test nginx:1.29.0 || true
+                sh '''  
+                echo 'Executing SNYK scan...'                     
+                snyk container test nginx:1.29.0 || true  
                 '''
             }
         }
@@ -64,6 +65,15 @@ pipeline {
                 -t http://localhost:3000 \
                 -r zap-report.html || true
                 kill $PF_PID
+                '''
+            }
+        }
+        stage ('Cleanup 🧹') {
+            steps {
+                sh '''
+                echo 'Cleaning up resources'
+                kubectl delete -f nginx-deploy.yaml --ignore-not-found=true
+                kubectl delete -f service.yaml --ignore-not-found=true
                 '''
             }
         }
